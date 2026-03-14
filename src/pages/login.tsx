@@ -42,16 +42,21 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-background">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">{APP_NAME}</CardTitle>
-          <CardDescription>Family Activity Tracker</CardDescription>
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <Card className="w-full max-w-sm shadow-xl border-0 rounded-2xl">
+        <CardHeader className="text-center pb-2">
+          <div className="text-5xl mb-2">&#x1F3E0;</div>
+          <CardTitle className="text-3xl font-extrabold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
+            {APP_NAME}
+          </CardTitle>
+          <CardDescription className="text-base">
+            Family Activity Tracker &#x2728;
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="font-semibold">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -59,10 +64,11 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
+                className="rounded-xl h-11"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="font-semibold">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -70,12 +76,17 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="current-password"
+                className="rounded-xl h-11"
               />
             </div>
             {error && (
-              <p className="text-sm text-destructive">{error}</p>
+              <p className="text-sm text-destructive font-medium">{error}</p>
             )}
-            <Button type="submit" className="w-full" disabled={submitting}>
+            <Button
+              type="submit"
+              className="w-full h-12 text-base font-bold rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 border-0 shadow-md"
+              disabled={submitting}
+            >
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign In
             </Button>
@@ -84,7 +95,7 @@ export default function LoginPage() {
             First time?{" "}
             <Link
               to="/setup/create-family"
-              className="text-primary underline underline-offset-4"
+              className="text-pink-500 font-semibold underline underline-offset-4 hover:text-pink-600"
             >
               Set up your family
             </Link>

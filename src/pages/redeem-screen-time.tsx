@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { QUICK_SELECT_MINUTES } from "@/lib/constants";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function RedeemScreenTimePage() {
@@ -35,7 +35,7 @@ export default function RedeemScreenTimePage() {
         kid_id: membership.id,
         minutes: Number(minutes),
       });
-      toast.success("Screen time requested!");
+      toast.success("Screen time requested! \u{1F389}");
       navigate("/dashboard");
     } catch {
       toast.error("Failed to request screen time.");
@@ -44,40 +44,42 @@ export default function RedeemScreenTimePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
+      <div className="flex items-center gap-3">
+        <button
           onClick={() => navigate("/dashboard")}
+          className="text-2xl hover:scale-110 transition-transform"
         >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-2xl font-bold">Use Screen Time</h1>
+          &#x2B05;&#xFE0F;
+        </button>
+        <h1 className="text-2xl font-extrabold">&#x1F3AE; Screen Time</h1>
       </div>
 
-      <Card>
-        <CardContent className="pt-6 text-center">
-          <p className="text-sm text-muted-foreground">Available Balance</p>
-          <p className="text-4xl font-bold mt-1">{available}</p>
-          <p className="text-sm text-muted-foreground mt-1">minutes</p>
+      <Card className="border-0 bg-gradient-to-br from-pink-500 via-purple-500 to-violet-600 text-white shadow-lg rounded-2xl">
+        <CardContent className="pt-6 pb-6 text-center">
+          <p className="text-sm opacity-90">&#x2728; Available Balance &#x2728;</p>
+          <p className="text-5xl font-extrabold mt-2 drop-shadow-sm">{available}</p>
+          <p className="text-sm opacity-90 mt-1">minutes</p>
         </CardContent>
       </Card>
 
       {hasPending ? (
-        <Card>
+        <Card className="border-dashed border-2 border-amber-200 bg-amber-50/50 rounded-2xl">
           <CardContent className="py-6 text-center">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-3xl mb-2">&#x23F3;</p>
+            <p className="text-sm text-amber-700 font-medium">
               You already have a pending screen time request. Wait for it to be
               reviewed before submitting another.
             </p>
           </CardContent>
         </Card>
       ) : (
-        <Card>
+        <Card className="border-0 shadow-md rounded-2xl">
           <CardContent className="pt-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="minutes">Minutes to Redeem</Label>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-3">
+                <Label htmlFor="minutes" className="font-bold text-base">
+                  How much screen time?
+                </Label>
                 <Input
                   id="minutes"
                   type="number"
@@ -89,14 +91,19 @@ export default function RedeemScreenTimePage() {
                   }
                   placeholder="30"
                   required
+                  className="rounded-xl h-12 text-lg text-center font-bold"
                 />
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-2 justify-center">
                   {QUICK_SELECT_MINUTES.filter((m) => m <= available).map(
                     (m) => (
                       <Button
                         key={m}
                         type="button"
-                        variant={minuteValue === m ? "default" : "outline"}
+                        className={`rounded-full px-4 font-bold border-0 shadow-sm ${
+                          minuteValue === m
+                            ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white"
+                            : "bg-pink-100 text-pink-700 hover:bg-pink-200"
+                        }`}
                         size="sm"
                         onClick={() => setMinutes(m)}
                       >
@@ -106,15 +113,15 @@ export default function RedeemScreenTimePage() {
                   )}
                 </div>
                 {minuteValue > available && (
-                  <p className="text-sm text-destructive">
-                    Cannot exceed your balance of {available} minutes.
+                  <p className="text-sm text-destructive font-medium text-center">
+                    Cannot exceed your balance of {available} minutes
                   </p>
                 )}
               </div>
 
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full h-12 text-base font-bold rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 border-0 shadow-md"
                 disabled={
                   submitRedemption.isPending ||
                   !minutes ||
@@ -125,7 +132,7 @@ export default function RedeemScreenTimePage() {
                 {submitRedemption.isPending && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                Request Screen Time
+                &#x1F3AE; Request Screen Time
               </Button>
             </form>
           </CardContent>

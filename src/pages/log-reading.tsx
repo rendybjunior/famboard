@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { MAX_READING_MINUTES, QUICK_SELECT_MINUTES } from "@/lib/constants";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function LogReadingPage() {
@@ -30,7 +30,7 @@ export default function LogReadingPage() {
         book_title: bookTitle || undefined,
         notes: notes || undefined,
       });
-      toast.success("Reading logged!");
+      toast.success("Reading logged! \u{1F31F}");
       navigate("/dashboard");
     } catch {
       toast.error("Failed to log reading.");
@@ -41,22 +41,23 @@ export default function LogReadingPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
+      <div className="flex items-center gap-3">
+        <button
           onClick={() => navigate("/dashboard")}
+          className="text-2xl hover:scale-110 transition-transform"
         >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-2xl font-bold">Log Reading</h1>
+          &#x2B05;&#xFE0F;
+        </button>
+        <h1 className="text-2xl font-extrabold">&#x1F4D6; Log Reading</h1>
       </div>
 
-      <Card>
+      <Card className="border-0 shadow-md rounded-2xl">
         <CardContent className="pt-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="minutes">Minutes Read</Label>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-3">
+              <Label htmlFor="minutes" className="font-bold text-base">
+                How long did you read?
+              </Label>
               <Input
                 id="minutes"
                 type="number"
@@ -68,13 +69,18 @@ export default function LogReadingPage() {
                 }
                 placeholder="30"
                 required
+                className="rounded-xl h-12 text-lg text-center font-bold"
               />
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex gap-2 justify-center">
                 {QUICK_SELECT_MINUTES.map((m) => (
                   <Button
                     key={m}
                     type="button"
-                    variant={minuteValue === m ? "default" : "outline"}
+                    className={`rounded-full px-4 font-bold border-0 shadow-sm ${
+                      minuteValue === m
+                        ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                        : "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                    }`}
                     size="sm"
                     onClick={() => setMinutes(m)}
                   >
@@ -83,35 +89,41 @@ export default function LogReadingPage() {
                 ))}
               </div>
               {minuteValue > MAX_READING_MINUTES && (
-                <p className="text-sm text-destructive">
-                  Maximum {MAX_READING_MINUTES} minutes per entry.
+                <p className="text-sm text-destructive font-medium text-center">
+                  Maximum {MAX_READING_MINUTES} minutes per entry
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="bookTitle">Book Title (optional)</Label>
+              <Label htmlFor="bookTitle" className="font-bold">
+                &#x1F4DA; Book Title (optional)
+              </Label>
               <Input
                 id="bookTitle"
                 value={bookTitle}
                 onChange={(e) => setBookTitle(e.target.value)}
                 placeholder="Harry Potter"
+                className="rounded-xl h-11"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="notes">Notes (optional)</Label>
+              <Label htmlFor="notes" className="font-bold">
+                &#x1F4DD; Notes (optional)
+              </Label>
               <Input
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Chapters 5-7"
+                className="rounded-xl h-11"
               />
             </div>
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full h-12 text-base font-bold rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 border-0 shadow-md"
               disabled={
                 submitReading.isPending ||
                 !minutes ||
@@ -122,7 +134,7 @@ export default function LogReadingPage() {
               {submitReading.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Submit
+              &#x2728; Submit Reading
             </Button>
           </form>
         </CardContent>

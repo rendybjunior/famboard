@@ -12,10 +12,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { BookOpen, Monitor, CheckCircle, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 type FilterType = "all" | "reading" | "redemption";
+
+const filterConfig: { value: FilterType; label: string; emoji: string }[] = [
+  { value: "all", label: "All", emoji: "\u{1F4CB}" },
+  { value: "reading", label: "Reading", emoji: "\u{1F4D6}" },
+  { value: "redemption", label: "Screen Time", emoji: "\u{1F3AE}" },
+];
 
 export default function ApprovalsPage() {
   const { membership } = useAuth();
@@ -69,7 +75,7 @@ export default function ApprovalsPage() {
           reviewedBy: membership.id,
         });
       }
-      toast.success("Approved!");
+      toast.success("Approved! \u{2705}");
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Failed to approve."
@@ -106,52 +112,51 @@ export default function ApprovalsPage() {
     }
   };
 
-  const filters: { value: FilterType; label: string }[] = [
-    { value: "all", label: "All" },
-    { value: "reading", label: "Reading" },
-    { value: "redemption", label: "Screen Time" },
-  ];
-
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Pending Approvals</h1>
+      <h1 className="text-2xl font-extrabold">&#x2705; Approvals</h1>
 
       <div className="flex gap-2">
-        {filters.map((f) => (
+        {filterConfig.map((f) => (
           <Button
             key={f.value}
-            variant={filter === f.value ? "default" : "outline"}
+            className={`rounded-full px-4 font-bold border-0 shadow-sm ${
+              filter === f.value
+                ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                : "bg-purple-100 text-purple-700 hover:bg-purple-200"
+            }`}
             size="sm"
             onClick={() => setFilter(f.value)}
           >
-            {f.label}
+            {f.emoji} {f.label}
           </Button>
         ))}
       </div>
 
       {items.length === 0 ? (
         <div className="text-center py-12">
-          <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground">No pending approvals.</p>
+          <p className="text-5xl mb-3">&#x1F389;</p>
+          <p className="text-lg font-bold text-emerald-600">All caught up!</p>
+          <p className="text-sm text-muted-foreground mt-1">No pending approvals</p>
         </div>
       ) : (
         <div className="space-y-3">
           {items.map((item) => (
-            <Card key={`${item.type}-${item.id}`}>
+            <Card
+              key={`${item.type}-${item.id}`}
+              className="border-0 shadow-sm rounded-2xl overflow-hidden"
+            >
               <CardContent className="py-4 px-4 space-y-3">
                 <div className="flex items-start gap-3">
-                  {item.type === "reading" ? (
-                    <BookOpen className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
-                  ) : (
-                    <Monitor className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
-                  )}
+                  <span className="text-2xl mt-0.5 shrink-0">
+                    {item.type === "reading" ? "\u{1F4D6}" : "\u{1F3AE}"}
+                  </span>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium">
-                      {item.kid?.display_name} —{" "}
-                      {item.type === "reading" ? "Reading" : "Screen Time"}
+                    <p className="font-bold">
+                      {item.kid?.display_name}
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      {item.minutes} minutes
+                    <p className="text-sm font-semibold text-purple-600">
+                      {item.minutes} min {item.type === "reading" ? "reading" : "screen time"}
                     </p>
                     {"book_title" in item && item.book_title && (
                       <p className="text-sm text-muted-foreground">
@@ -166,7 +171,7 @@ export default function ApprovalsPage() {
                 <div className="flex gap-2">
                   <Button
                     size="sm"
-                    className="flex-1"
+                    className="flex-1 rounded-xl font-bold bg-emerald-500 hover:bg-emerald-600 text-white border-0 shadow-sm h-10"
                     onClick={() => handleApprove(item.id, item.type)}
                     disabled={
                       reviewReading.isPending || reviewRedemption.isPending
@@ -175,17 +180,16 @@ export default function ApprovalsPage() {
                     {(reviewReading.isPending || reviewRedemption.isPending) && (
                       <Loader2 className="mr-1 h-3 w-3 animate-spin" />
                     )}
-                    Approve
+                    &#x2705; Approve
                   </Button>
                   <Button
                     size="sm"
-                    variant="destructive"
-                    className="flex-1"
+                    className="flex-1 rounded-xl font-bold bg-red-100 text-red-600 hover:bg-red-200 border-0 shadow-sm h-10"
                     onClick={() =>
                       setRejectDialog({ id: item.id, type: item.type })
                     }
                   >
-                    Reject
+                    &#x274C; Reject
                   </Button>
                 </div>
               </CardContent>
@@ -211,10 +215,12 @@ export default function ApprovalsPage() {
             placeholder="Reason (optional)"
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
+            className="rounded-xl"
           />
           <DialogFooter>
             <Button
               variant="outline"
+              className="rounded-xl"
               onClick={() => {
                 setRejectDialog(null);
                 setRejectReason("");
@@ -222,7 +228,10 @@ export default function ApprovalsPage() {
             >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleReject}>
+            <Button
+              className="rounded-xl bg-red-500 hover:bg-red-600 text-white border-0"
+              onClick={handleReject}
+            >
               Reject
             </Button>
           </DialogFooter>
