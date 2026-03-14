@@ -4,7 +4,6 @@ export type EntryStatus = "pending" | "approved" | "rejected" | "cancelled";
 export interface Family {
   id: string;
   name: string;
-  invite_code: string;
   created_at: string;
   updated_at: string;
 }

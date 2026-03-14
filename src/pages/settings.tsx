@@ -4,7 +4,6 @@ import {
   useFamily,
   useFamilyMembers,
   useUpdateFamily,
-  useRegenerateInviteCode,
   useUpdateMemberRole,
   useUpdateRedemptionRate,
   useRemoveMember,
@@ -23,7 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Copy, RefreshCw, Loader2, Trash2, UserPlus } from "lucide-react";
+import { Loader2, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
@@ -32,7 +31,6 @@ export default function SettingsPage() {
   const { data: family } = useFamily(familyId);
   const { data: members } = useFamilyMembers(familyId);
   const updateFamily = useUpdateFamily();
-  const regenerateCode = useRegenerateInviteCode();
   const updateRole = useUpdateMemberRole();
   const updateRate = useUpdateRedemptionRate();
   const removeMember = useRemoveMember();
@@ -49,10 +47,6 @@ export default function SettingsPage() {
   const [kidEmail, setKidEmail] = useState("");
   const [kidPassword, setKidPassword] = useState("");
 
-  const inviteUrl = family
-    ? `${window.location.origin}/setup/join-family/${family.invite_code}`
-    : "";
-
   const handleSaveName = async (e: FormEvent) => {
     e.preventDefault();
     if (!family) return;
@@ -64,21 +58,6 @@ export default function SettingsPage() {
       toast.success("Family name updated.");
     } catch {
       toast.error("Failed to update name.");
-    }
-  };
-
-  const handleCopyLink = async () => {
-    await navigator.clipboard.writeText(inviteUrl);
-    toast.success("Invite link copied!");
-  };
-
-  const handleRegenerate = async () => {
-    if (!family) return;
-    try {
-      await regenerateCode.mutateAsync(family.id);
-      toast.success("Invite code regenerated. Old links no longer work.");
-    } catch {
-      toast.error("Failed to regenerate code.");
     }
   };
 
@@ -155,31 +134,6 @@ export default function SettingsPage() {
               Save
             </Button>
           </form>
-        </CardContent>
-      </Card>
-
-      {/* Invite Link */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Invite Link</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-sm text-muted-foreground break-all">{inviteUrl}</p>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleCopyLink}>
-              <Copy className="mr-1 h-4 w-4" />
-              Copy
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRegenerate}
-              disabled={regenerateCode.isPending}
-            >
-              <RefreshCw className="mr-1 h-4 w-4" />
-              Regenerate
-            </Button>
-          </div>
         </CardContent>
       </Card>
 

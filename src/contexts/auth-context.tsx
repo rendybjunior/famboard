@@ -14,6 +14,7 @@ interface AuthContextType {
   session: Session | null;
   membership: FamilyMember | null;
   isLoading: boolean;
+  membershipLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<string>;
   signOut: () => Promise<void>;
@@ -26,15 +27,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [membership, setMembership] = useState<FamilyMember | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [membershipLoading, setMembershipLoading] = useState(false);
 
   const fetchMembership = useCallback(async (userId: string) => {
-    const { data } = await supabase
-      .from("family_members")
-      .select("*")
-      .eq("user_id", userId)
-      .limit(1)
-      .single();
-    setMembership(data as FamilyMember | null);
+    setMembershipLoading(true);
+    try {
+      const { data } = await supabase
+        .from("family_members")
+        .select("*")
+        .eq("user_id", userId)
+        .limit(1)
+        .single();
+      setMembership(data as FamilyMember | null);
+    } finally {
+      setMembershipLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -94,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         membership,
         isLoading,
+        membershipLoading,
         signIn,
         signUp,
         signOut,

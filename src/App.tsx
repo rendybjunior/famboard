@@ -6,7 +6,6 @@ import { AppLayout } from "@/components/layout/app-layout";
 import { Toaster } from "@/components/ui/sonner";
 
 import LoginPage from "@/pages/login";
-import JoinFamilyPage from "@/pages/setup/join-family";
 import DashboardPage from "@/pages/dashboard/index";
 import ApprovalsPage from "@/pages/approvals";
 import HistoryPage from "@/pages/history";
@@ -28,10 +27,6 @@ export default function App() {
           <Routes>
             {/* Public */}
             <Route path="/login" element={<LoginPage />} />
-            <Route
-              path="/setup/join-family/:inviteCode"
-              element={<JoinFamilyPage />}
-            />
 
             {/* Auth required */}
             <Route element={<ProtectedRoute />}>

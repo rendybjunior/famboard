@@ -72,22 +72,6 @@ export function useUpdateFamily() {
   });
 }
 
-export function useRegenerateInviteCode() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (familyId: string) => {
-      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-      const { error } = await supabase
-        .from("families")
-        .update({ invite_code: code })
-        .eq("id", familyId);
-      if (error) throw error;
-      return code;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["family"] }),
-  });
-}
-
 export function useUpdateMemberRole() {
   const qc = useQueryClient();
   return useMutation({
