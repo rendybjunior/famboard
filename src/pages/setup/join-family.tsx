@@ -91,7 +91,7 @@ export default function JoinFamilyPage() {
       });
       if (rpcErr) throw rpcErr;
 
-      await refreshMembership();
+      await refreshMembership(userId);
       navigate("/dashboard");
     } catch (err: unknown) {
       const message =

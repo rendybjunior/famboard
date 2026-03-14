@@ -17,7 +17,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<string>;
   signOut: () => Promise<void>;
-  refreshMembership: () => Promise<void>;
+  refreshMembership: (userId?: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -81,9 +81,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setMembership(null);
   };
 
-  const refreshMembership = async () => {
-    if (session) {
-      await fetchMembership(session.user.id);
+  const refreshMembership = async (userId?: string) => {
+    const uid = userId ?? session?.user.id;
+    if (uid) {
+      await fetchMembership(uid);
     }
   };
 

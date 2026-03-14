@@ -62,7 +62,7 @@ export default function CreateFamilyPage() {
       if (needsSignUp) {
         await signIn(email, password);
       }
-      await refreshMembership();
+      await refreshMembership(userId);
       navigate("/dashboard");
     } catch (err: unknown) {
       const message =
@@ -72,10 +72,18 @@ export default function CreateFamilyPage() {
             ? (err as { message: string }).message
             : "Something went wrong";
       setError(message);
-    } finally {
       setSubmitting(false);
     }
   };
+
+  if (submitting) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+        <p className="text-muted-foreground">Setting up your family...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
