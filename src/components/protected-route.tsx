@@ -8,9 +8,9 @@ export function ProtectedRoute({
 }: {
   requiredRole?: UserRole;
 }) {
-  const { session, membership, isLoading } = useAuth();
+  const { session, membership, isLoading, membershipLoading } = useAuth();
 
-  if (isLoading) {
+  if (isLoading || membershipLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -18,8 +18,7 @@ export function ProtectedRoute({
     );
   }
 
-  if (!session) return <Navigate to="/login" replace />;
-  if (!membership) return <Navigate to="/setup/create-family" replace />;
+  if (!session || !membership) return <Navigate to="/login" replace />;
   if (requiredRole && membership.role !== requiredRole) {
     return <Navigate to="/dashboard" replace />;
   }
