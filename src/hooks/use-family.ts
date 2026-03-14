@@ -72,26 +72,6 @@ export function useUpdateFamily() {
   });
 }
 
-export function useUpdateMemberRole() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({
-      memberId,
-      role,
-    }: {
-      memberId: string;
-      role: "parent" | "kid";
-    }) => {
-      const { error } = await supabase
-        .from("family_members")
-        .update({ role })
-        .eq("id", memberId);
-      if (error) throw error;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["family-members"] }),
-  });
-}
-
 export function useUpdateRedemptionRate() {
   const qc = useQueryClient();
   return useMutation({
@@ -150,6 +130,43 @@ export function useAddKid() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["family-members"] });
       qc.invalidateQueries({ queryKey: ["kid-balances"] });
+    },
+  });
+}
+
+export function useAddParent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      displayName,
+      email,
+      password,
+    }: {
+      displayName: string;
+      email: string;
+      password: string;
+    }) => {
+      const tempClient = createClient(
+        import.meta.env.VITE_SUPABASE_URL,
+        import.meta.env.VITE_SUPABASE_ANON_KEY,
+        { auth: { autoRefreshToken: false, persistSession: false } },
+      );
+
+      const { data, error: signUpErr } = await tempClient.auth.signUp({
+        email,
+        password,
+      });
+      if (signUpErr) throw signUpErr;
+      if (!data.user) throw new Error("Failed to create account");
+
+      const { error: rpcErr } = await supabase.rpc("add_parent_to_family", {
+        parent_user_id: data.user.id,
+        parent_display_name: displayName,
+      });
+      if (rpcErr) throw rpcErr;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["family-members"] });
     },
   });
 }

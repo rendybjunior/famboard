@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCheck } from "lucide-react";
 import { toast } from "sonner";
 
 type FilterType = "all" | "reading" | "redemption";
@@ -32,6 +32,7 @@ export default function ApprovalsPage() {
     type: "reading" | "redemption";
   } | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [bulkApproving, setBulkApproving] = useState(false);
 
   const { data: readings } = useReadingEntries({
     familyId,
@@ -83,6 +84,39 @@ export default function ApprovalsPage() {
     }
   };
 
+  const handleBulkApprove = async () => {
+    if (!membership || items.length === 0) return;
+    setBulkApproving(true);
+    let approved = 0;
+    let failed = 0;
+    for (const item of items) {
+      try {
+        if (item.type === "reading") {
+          await reviewReading.mutateAsync({
+            entryId: item.id,
+            status: "approved",
+            reviewedBy: membership.id,
+          });
+        } else {
+          await reviewRedemption.mutateAsync({
+            entryId: item.id,
+            status: "approved",
+            reviewedBy: membership.id,
+          });
+        }
+        approved++;
+      } catch {
+        failed++;
+      }
+    }
+    setBulkApproving(false);
+    if (failed === 0) {
+      toast.success(`Approved all ${approved} items!`);
+    } else {
+      toast.warning(`Approved ${approved}, failed ${failed}.`);
+    }
+  };
+
   const handleReject = async () => {
     if (!rejectDialog || !membership) return;
     try {
@@ -114,7 +148,24 @@ export default function ApprovalsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-extrabold">&#x2705; Approvals</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-extrabold">&#x2705; Approvals</h1>
+        {items.length > 1 && (
+          <Button
+            size="sm"
+            className="rounded-xl font-bold bg-emerald-500 hover:bg-emerald-600 text-white border-0 shadow-sm"
+            onClick={handleBulkApprove}
+            disabled={bulkApproving}
+          >
+            {bulkApproving ? (
+              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+            ) : (
+              <CheckCheck className="mr-1 h-4 w-4" />
+            )}
+            Approve All ({items.length})
+          </Button>
+        )}
+      </div>
 
       <div className="flex gap-2">
         {filterConfig.map((f) => (

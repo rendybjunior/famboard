@@ -4,10 +4,10 @@ import {
   useFamily,
   useFamilyMembers,
   useUpdateFamily,
-  useUpdateMemberRole,
   useUpdateRedemptionRate,
   useRemoveMember,
   useAddKid,
+  useAddParent,
 } from "@/hooks/use-family";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,10 +31,10 @@ export default function SettingsPage() {
   const { data: family } = useFamily(familyId);
   const { data: members } = useFamilyMembers(familyId);
   const updateFamily = useUpdateFamily();
-  const updateRole = useUpdateMemberRole();
   const updateRate = useUpdateRedemptionRate();
   const removeMember = useRemoveMember();
   const addKid = useAddKid();
+  const addParent = useAddParent();
 
   const [familyName, setFamilyName] = useState("");
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
@@ -42,10 +42,12 @@ export default function SettingsPage() {
     memberId: string;
     rate: number;
   } | null>(null);
-  const [showAddKid, setShowAddKid] = useState(false);
-  const [kidName, setKidName] = useState("");
-  const [kidEmail, setKidEmail] = useState("");
-  const [kidPassword, setKidPassword] = useState("");
+  const [addMemberRole, setAddMemberRole] = useState<"kid" | "parent" | null>(
+    null,
+  );
+  const [memberName, setMemberName] = useState("");
+  const [memberEmail, setMemberEmail] = useState("");
+  const [memberPassword, setMemberPassword] = useState("");
 
   const handleSaveName = async (e: FormEvent) => {
     e.preventDefault();
@@ -73,19 +75,21 @@ export default function SettingsPage() {
     }
   };
 
-  const handleAddKid = async (e: FormEvent) => {
+  const handleAddMember = async (e: FormEvent) => {
     e.preventDefault();
+    if (!addMemberRole) return;
     try {
-      await addKid.mutateAsync({
-        displayName: kidName,
-        email: kidEmail,
-        password: kidPassword,
+      const mutation = addMemberRole === "kid" ? addKid : addParent;
+      await mutation.mutateAsync({
+        displayName: memberName,
+        email: memberEmail,
+        password: memberPassword,
       });
-      toast.success(`${kidName} has been added to the family!`);
-      setShowAddKid(false);
-      setKidName("");
-      setKidEmail("");
-      setKidPassword("");
+      toast.success(`${memberName} has been added to the family!`);
+      setAddMemberRole(null);
+      setMemberName("");
+      setMemberEmail("");
+      setMemberPassword("");
     } catch (err: unknown) {
       const message =
         err instanceof Error
@@ -111,6 +115,8 @@ export default function SettingsPage() {
       setEditingRate(null);
     }
   };
+
+  const addMemberPending = addKid.isPending || addParent.isPending;
 
   return (
     <div className="space-y-6">
@@ -141,10 +147,20 @@ export default function SettingsPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base">Members</CardTitle>
-          <Button size="sm" onClick={() => setShowAddKid(true)}>
-            <UserPlus className="mr-1 h-4 w-4" />
-            Add Kid
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => setAddMemberRole("kid")}>
+              <UserPlus className="mr-1 h-4 w-4" />
+              Add Kid
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setAddMemberRole("parent")}
+            >
+              <UserPlus className="mr-1 h-4 w-4" />
+              Add Parent
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-3">
           {members?.map((member) => {
@@ -159,38 +175,28 @@ export default function SettingsPage() {
                         (You)
                       </span>
                     )}
-                    <Badge variant={member.role === "parent" ? "default" : "secondary"}>
+                    <Badge
+                      variant={
+                        member.role === "parent" ? "default" : "secondary"
+                      }
+                    >
                       {member.role}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-1">
                     {member.role === "kid" && (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            setEditingRate({
-                              memberId: member.id,
-                              rate: member.redemption_rate,
-                            })
-                          }
-                        >
-                          {member.redemption_rate}:1
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            updateRole.mutateAsync({
-                              memberId: member.id,
-                              role: "parent",
-                            })
-                          }
-                        >
-                          Promote
-                        </Button>
-                      </>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setEditingRate({
+                            memberId: member.id,
+                            rate: member.redemption_rate,
+                          })
+                        }
+                      >
+                        {member.redemption_rate}:1
+                      </Button>
                     )}
                     {!isMe && (
                       <Button
@@ -234,43 +240,45 @@ export default function SettingsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Add Kid */}
+      {/* Add Member (Kid or Parent) */}
       <Dialog
-        open={showAddKid}
-        onOpenChange={(open: boolean) => !open && setShowAddKid(false)}
+        open={!!addMemberRole}
+        onOpenChange={(open: boolean) => !open && setAddMemberRole(null)}
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Kid</DialogTitle>
+            <DialogTitle>
+              Add {addMemberRole === "parent" ? "Parent" : "Kid"}
+            </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleAddKid} className="space-y-4">
+          <form onSubmit={handleAddMember} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="kidName">Name</Label>
+              <Label htmlFor="memberName">Name</Label>
               <Input
-                id="kidName"
-                value={kidName}
-                onChange={(e) => setKidName(e.target.value)}
-                placeholder="Alex"
+                id="memberName"
+                value={memberName}
+                onChange={(e) => setMemberName(e.target.value)}
+                placeholder={addMemberRole === "parent" ? "Dad" : "Alex"}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="kidEmail">Email</Label>
+              <Label htmlFor="memberEmail">Email</Label>
               <Input
-                id="kidEmail"
+                id="memberEmail"
                 type="email"
-                value={kidEmail}
-                onChange={(e) => setKidEmail(e.target.value)}
+                value={memberEmail}
+                onChange={(e) => setMemberEmail(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="kidPassword">Password</Label>
+              <Label htmlFor="memberPassword">Password</Label>
               <Input
-                id="kidPassword"
+                id="memberPassword"
                 type="password"
-                value={kidPassword}
-                onChange={(e) => setKidPassword(e.target.value)}
+                value={memberPassword}
+                onChange={(e) => setMemberPassword(e.target.value)}
                 required
                 minLength={6}
               />
@@ -279,15 +287,15 @@ export default function SettingsPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setShowAddKid(false)}
+                onClick={() => setAddMemberRole(null)}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={addKid.isPending}>
-                {addKid.isPending && (
+              <Button type="submit" disabled={addMemberPending}>
+                {addMemberPending && (
                   <Loader2 className="mr-1 h-4 w-4 animate-spin" />
                 )}
-                Add Kid
+                Add {addMemberRole === "parent" ? "Parent" : "Kid"}
               </Button>
             </DialogFooter>
           </form>
@@ -304,9 +312,7 @@ export default function SettingsPage() {
             <DialogTitle>Redemption Rate</DialogTitle>
           </DialogHeader>
           <div className="space-y-2">
-            <Label>
-              Reading minutes required for 1 screen time minute
-            </Label>
+            <Label>Reading minutes required for 1 screen time minute</Label>
             <Input
               type="number"
               min={1}
