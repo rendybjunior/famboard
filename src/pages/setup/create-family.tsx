@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +16,7 @@ import {
 import { Loader2 } from "lucide-react";
 
 export default function CreateFamilyPage() {
-  const { session, signUp, refreshMembership } = useAuth();
+  const { session, signIn, refreshMembership } = useAuth();
   const navigate = useNavigate();
   const [familyName, setFamilyName] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -34,21 +35,43 @@ export default function CreateFamilyPage() {
       let userId = session?.user.id;
 
       if (needsSignUp) {
-        userId = await signUp(email, password);
+        // Sign up with a temp client so the main client session isn't affected mid-flow
+        const tempClient = createClient(
+          import.meta.env.VITE_SUPABASE_URL,
+          import.meta.env.VITE_SUPABASE_ANON_KEY,
+          { auth: { autoRefreshToken: false, persistSession: false } },
+        );
+        const { data, error: signUpErr } = await tempClient.auth.signUp({
+          email,
+          password,
+        });
+        if (signUpErr) throw signUpErr;
+        if (!data.user) throw new Error("Failed to create account");
+        userId = data.user.id;
       }
 
-      if (!userId) throw new Error("No user ID");
-
+      // Pass for_user_id so it works even before session is established
       const { error: rpcErr } = await supabase.rpc("create_family", {
         family_name: familyName,
         creator_display_name: displayName,
+        for_user_id: userId,
       });
       if (rpcErr) throw rpcErr;
 
+      // Now sign in to establish the session
+      if (needsSignUp) {
+        await signIn(email, password);
+      }
       await refreshMembership();
       navigate("/dashboard");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "object" && err !== null && "message" in err
+            ? (err as { message: string }).message
+            : "Something went wrong";
+      setError(message);
     } finally {
       setSubmitting(false);
     }
