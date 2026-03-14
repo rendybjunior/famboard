@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #a855f7;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #fbbf24;
+  --color-secondary-foreground: #78350f;
+  --color-accent: #f472b6;
+  --color-accent-foreground: #ffffff;
+  --color-background: #fdf4ff;
+  --color-foreground: #3b0764;
+  --color-card: #ffffff;
+  --color-card-foreground: #3b0764;
+  --color-muted: #f5e6ff;
+  --color-muted-foreground: #7c3aed;
+  --color-border: #e9d5ff;
+  --color-input: #e9d5ff;
+  --color-ring: #a855f7;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+
+  --font-sans: "Nunito", "Segoe UI", system-ui, sans-serif;
+  --radius-lg: 1rem;
+  --radius-md: 0.75rem;
+  --radius-sm: 0.5rem;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
+body {
+  font-family: var(--font-sans);
+  background: linear-gradient(180deg, #fdf4ff 0%, #fce7f3 50%, #ede9fe 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
