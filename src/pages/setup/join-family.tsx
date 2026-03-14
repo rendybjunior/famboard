@@ -87,13 +87,20 @@ export default function JoinFamilyPage() {
       const { error: rpcErr } = await supabase.rpc("join_family", {
         invite_code: inviteCode!,
         member_display_name: displayName,
+        for_user_id: userId,
       });
       if (rpcErr) throw rpcErr;
 
       await refreshMembership();
       navigate("/dashboard");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "object" && err !== null && "message" in err
+            ? (err as { message: string }).message
+            : "Something went wrong";
+      setError(message);
     } finally {
       setSubmitting(false);
     }

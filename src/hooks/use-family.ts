@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import type { Family, FamilyMember } from "@/types/database";
 
@@ -122,6 +123,45 @@ export function useUpdateRedemptionRate() {
         .update({ redemption_rate: rate })
         .eq("id", memberId);
       if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["family-members"] });
+      qc.invalidateQueries({ queryKey: ["kid-balances"] });
+    },
+  });
+}
+
+export function useAddKid() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      displayName,
+      email,
+      password,
+    }: {
+      displayName: string;
+      email: string;
+      password: string;
+    }) => {
+      // Create a temporary client so signing up the kid doesn't sign out the parent
+      const tempClient = createClient(
+        import.meta.env.VITE_SUPABASE_URL,
+        import.meta.env.VITE_SUPABASE_ANON_KEY,
+        { auth: { autoRefreshToken: false, persistSession: false } },
+      );
+
+      const { data, error: signUpErr } = await tempClient.auth.signUp({
+        email,
+        password,
+      });
+      if (signUpErr) throw signUpErr;
+      if (!data.user) throw new Error("Failed to create account");
+
+      const { error: rpcErr } = await supabase.rpc("add_kid_to_family", {
+        kid_user_id: data.user.id,
+        kid_display_name: displayName,
+      });
+      if (rpcErr) throw rpcErr;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["family-members"] });

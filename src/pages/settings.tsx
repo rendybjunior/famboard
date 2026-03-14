@@ -8,6 +8,7 @@ import {
   useUpdateMemberRole,
   useUpdateRedemptionRate,
   useRemoveMember,
+  useAddKid,
 } from "@/hooks/use-family";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Copy, RefreshCw, Loader2, Trash2 } from "lucide-react";
+import { Copy, RefreshCw, Loader2, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
@@ -35,6 +36,7 @@ export default function SettingsPage() {
   const updateRole = useUpdateMemberRole();
   const updateRate = useUpdateRedemptionRate();
   const removeMember = useRemoveMember();
+  const addKid = useAddKid();
 
   const [familyName, setFamilyName] = useState("");
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
@@ -42,6 +44,10 @@ export default function SettingsPage() {
     memberId: string;
     rate: number;
   } | null>(null);
+  const [showAddKid, setShowAddKid] = useState(false);
+  const [kidName, setKidName] = useState("");
+  const [kidEmail, setKidEmail] = useState("");
+  const [kidPassword, setKidPassword] = useState("");
 
   const inviteUrl = family
     ? `${window.location.origin}/setup/join-family/${family.invite_code}`
@@ -85,6 +91,30 @@ export default function SettingsPage() {
       toast.error("Failed to remove member.");
     } finally {
       setConfirmRemove(null);
+    }
+  };
+
+  const handleAddKid = async (e: FormEvent) => {
+    e.preventDefault();
+    try {
+      await addKid.mutateAsync({
+        displayName: kidName,
+        email: kidEmail,
+        password: kidPassword,
+      });
+      toast.success(`${kidName} has been added to the family!`);
+      setShowAddKid(false);
+      setKidName("");
+      setKidEmail("");
+      setKidPassword("");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "object" && err !== null && "message" in err
+            ? (err as { message: string }).message
+            : "Something went wrong";
+      toast.error(message);
     }
   };
 
@@ -155,8 +185,12 @@ export default function SettingsPage() {
 
       {/* Members */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base">Members</CardTitle>
+          <Button size="sm" onClick={() => setShowAddKid(true)}>
+            <UserPlus className="mr-1 h-4 w-4" />
+            Add Kid
+          </Button>
         </CardHeader>
         <CardContent className="space-y-3">
           {members?.map((member) => {
@@ -243,6 +277,66 @@ export default function SettingsPage() {
               Remove
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Kid */}
+      <Dialog
+        open={showAddKid}
+        onOpenChange={(open: boolean) => !open && setShowAddKid(false)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Kid</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAddKid} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="kidName">Name</Label>
+              <Input
+                id="kidName"
+                value={kidName}
+                onChange={(e) => setKidName(e.target.value)}
+                placeholder="Alex"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="kidEmail">Email</Label>
+              <Input
+                id="kidEmail"
+                type="email"
+                value={kidEmail}
+                onChange={(e) => setKidEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="kidPassword">Password</Label>
+              <Input
+                id="kidPassword"
+                type="password"
+                value={kidPassword}
+                onChange={(e) => setKidPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowAddKid(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={addKid.isPending}>
+                {addKid.isPending && (
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                )}
+                Add Kid
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
