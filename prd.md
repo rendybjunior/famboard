@@ -23,19 +23,12 @@ Parents want to encourage reading habits while managing screen time. Currently, 
 
 ## Authentication
 
-### Phase 1 (MVP)
-- **Simple email/password login** via **Supabase Auth** (built into Supabase's free tier — 50K MAU).
+- **Email/password login + Google SSO** via **Supabase Auth** (built into Supabase's free tier — 50K MAU).
 - **Disable email confirmation** in Supabase dashboard (Auth > Settings > toggle off "Enable email confirmations"). This is a family tool — we trust the parent who sets up accounts. This also avoids Supabase's strict email rate limits (3 emails/hour on free tier).
 - **Session duration: 30 days**, rolling (auto-refreshes on each visit). Kids should almost never need to re-login. Security is intentionally relaxed — this is a family tool, not a bank.
-- Family setup is done via **hidden URL pages** (not linked in navigation):
-  - `/setup/create-family` — parent creates a family and becomes the admin.
-  - `/setup/join-family/<invite-code>` — parent shares this URL with kids to join. The `invite-code` is a short, randomly generated code (e.g., 6 alphanumeric characters) separate from the family ID, to prevent unauthorized joins.
-- **Role assignment:** When joining via the invite link, new members default to the **Kid** role. A parent can promote any member to the Parent role from Family Settings.
-- **Invite code lifecycle:** The invite code is generated when the family is created. A parent can regenerate it from Family Settings (which invalidates the old one). No expiry for Phase 1.
-
-### Phase 2
-- **Google SSO (Gmail)** — enable Google OAuth in Supabase dashboard (no code changes needed).
-- Proper onboarding flow with invite codes that expire.
+- **Unified login page** (`/login`): Sign-in mode (email/password or Google SSO) and sign-up mode (creates account + family in one step). No separate setup pages.
+- **Google SSO flow:** After Google sign-in, if the user has no family yet, they are prompted to create one (family name + display name).
+- **Adding members:** Parents add kids and co-parents directly from Family Settings by creating their accounts (email + password + display name). Role is assigned at creation time — no invite codes or role promotion.
 
 ---
 
@@ -104,38 +97,35 @@ Parents want to encourage reading habits while managing screen time. Currently, 
 ## Pages / Screens
 
 ### 1. Login Page
-- Email / password form.
-- App logo and tagline.
-- Link to `/setup/create-family` for first-time parents.
+- **Google SSO** button ("Continue with Google").
+- **Email / password** form with sign-in / sign-up toggle.
+- **Sign-up mode** includes family name and display name fields — creates user account and family in one step.
+- **Post-Google-SSO flow**: if the user has no family, shows a "Create Your Family" form (family name + display name).
 
-### 2. Family Setup (hidden pages -- Phase 1)
-- **`/setup/create-family`** — enter family name, parent registers with email/password -> creates the family, user becomes Parent.
-- **`/setup/join-family/<invite-code>`** — user registers with email/password -> joins the family as Kid.
-
-### 3. Dashboard (Kid View)
+### 2. Dashboard (Kid View)
 - **Screen Time Balance** — large, prominent number showing available minutes.
 - **Recent Activity** — last 10 entries (reading submissions + redemptions, with status badges: Pending/Approved/Rejected/Cancelled).
 - Quick-action buttons: **"+ Log Reading"** and **"Use Screen Time"**.
 
-### 4. Dashboard (Parent View)
+### 3. Dashboard (Parent View)
 - **Family Overview** — card per kid showing name and current balance.
 - **Pending Approvals** — count badge on the nav bar and a summary card on dashboard; tap to review.
 - **Recent Family Activity** — unified feed across all kids.
 
-### 5. Pending Approvals (Parent)
+### 4. Pending Approvals (Parent)
 - Filtered list of all pending reading & redemption requests.
 - Each card shows: kid name, type (reading/redemption), minutes, book title (if reading), submission date.
-- Approve / Reject buttons on each card.
+- Approve / Reject buttons on each card. Bulk approve button for approving all pending entries at once.
 
-### 6. History
+### 5. History
 - Filterable by kid, date range, type (reading / screen time), status.
 - Chronological log of all entries.
 - Kid view: own entries only. Parent view: all family entries.
 
-### 7. Family Settings (Parent only)
+### 6. Family Settings (Parent only)
 - **Family Name** — editable.
-- **Members** — list with role, ability to remove or change role.
-- **Invite Link** — display the join URL with invite code; button to regenerate code.
+- **Members** — list with role badges, ability to remove members.
+- **Add Kid / Add Parent** — parent creates accounts for kids and co-parents (email + password + display name).
 - **Redemption Rate** — adjust reading-to-screen-time ratio **per kid**.
 
 ---
@@ -164,7 +154,7 @@ family_members 1--* redemptions (as reviewer)
 
 | Table | Purpose |
 |---|---|
-| `families` | Family group (name, invite_code) |
+| `families` | Family group (name) |
 | `family_members` | Links auth.users to a family with role + per-kid redemption_rate |
 | `reading_entries` | Reading time submissions (minutes, book, status, review) |
 | `redemptions` | Screen time redemption requests (minutes, status, review) |
@@ -199,37 +189,36 @@ All tables have RLS enabled. Key rules:
 | **Frontend** | Vite + React + TypeScript — lightweight SPA, mobile-first responsive design |
 | **UI** | Tailwind CSS + shadcn/ui components |
 | **Routing** | React Router |
-| **Auth** | Supabase Auth (email/password for Phase 1; Google OAuth toggle in Phase 2) |
+| **Auth** | Supabase Auth (email/password + Google OAuth) |
 | **Database** | Supabase (PostgreSQL) + `@supabase/supabase-js` client |
 | **Hosting** | Vercel (pairs well with Supabase, simple deploy from Git) |
 | **Notifications** | In-app badge count (MVP) / Web Push API (Phase 2) |
 
 ---
 
-## MVP Scope (Phase 1)
+## Implemented Features
 
-> [!IMPORTANT]
-> Phase 1 focuses on the core loop: log -> approve -> redeem -> approve.
+> [!NOTE]
+> The core loop is fully implemented: log -> approve -> redeem -> approve.
 
-- [ ] Simple email/password login
-- [ ] Create family (hidden URL page, generates invite code)
-- [ ] Join family via invite code (hidden URL page, defaults to Kid role)
-- [ ] Kid: submit reading time (max 180 min per entry)
-- [ ] Parent: approve / reject reading time
-- [ ] Kid: request screen-time redemption (with balance validation)
-- [ ] Parent: approve / reject screen-time redemption
-- [ ] Kid: cancel own pending entries
-- [ ] Balance display on dashboard (computed on-the-fly)
-- [ ] Parent: per-kid redemption rate setting
-- [ ] Pending approvals badge on parent nav bar
-- [ ] Basic history view with filters
-- [ ] Family settings (members, invite link, rates)
+- [x] Email/password login + Google SSO
+- [x] Unified login page with inline signup + family creation
+- [x] Parent adds kids and co-parents from Family Settings
+- [x] Kid: submit reading time (max 180 min per entry)
+- [x] Parent: approve / reject reading time
+- [x] Parent: bulk approve all pending entries
+- [x] Kid: request screen-time redemption (with balance validation)
+- [x] Parent: approve / reject screen-time redemption
+- [x] Kid: cancel own pending entries
+- [x] Balance display on dashboard (computed on-the-fly)
+- [x] Parent: per-kid redemption rate setting
+- [x] Pending approvals badge on parent nav bar
+- [x] Basic history view with filters
+- [x] Family settings (members, rates, add/remove members)
 
-### Out of scope for Phase 1
-- Google SSO (use simple email/password for now).
-- Expiring invite codes (use regeneratable codes instead).
-- Push notifications (use in-app badge only).
-- Offline support / PWA (show offline banner only).
+### Not yet implemented
+- Push notifications (using in-app badge only).
+- Offline support / PWA (showing offline banner only).
 - Multiple activity types beyond reading.
 - Gamification (streaks, badges, leaderboards).
 - Detailed analytics / charts.
@@ -237,12 +226,10 @@ All tables have RLS enabled. Key rules:
 
 ---
 
-## Future Features (Phase 2+)
+## Future Features
 
 | Feature | Description |
 |---|---|
-| **Google SSO** | Upgrade login to Google OAuth 2.0 for seamless sign-in. |
-| **Expiring Invites** | Invite codes that expire after a configurable duration. |
 | **Push Notifications** | Real-time alerts for pending approvals. |
 | **Entry Corrections** | Parents can adjust approved entry minutes after the fact. |
 | **Gamification** | Streaks, badges, achievements for consistent reading. |
@@ -264,4 +251,4 @@ All tables have RLS enabled. Key rules:
 
 ---
 
-*Document version: 2.0 — 2026-03-14*
+*Document version: 3.0 — 2026-03-14*

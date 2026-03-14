@@ -13,8 +13,8 @@
 --
 
 -- Family
-insert into families (id, name, invite_code)
-values ('a0000000-0000-0000-0000-000000000001', 'The Smiths', 'ABC123');
+insert into families (id, name)
+values ('a0000000-0000-0000-0000-000000000001', 'The Smiths');
 
 -- Members (replace the user_id values with your real UUIDs from the dashboard)
 insert into family_members (id, family_id, user_id, display_name, role, redemption_rate)

@@ -16,7 +16,6 @@ interface AuthContextType {
   isLoading: boolean;
   membershipLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<string>;
   signOut: () => Promise<void>;
   refreshMembership: (userId?: string) => Promise<void>;
 }
@@ -76,13 +75,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   };
 
-  const signUp = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) throw error;
-    if (!data.user) throw new Error("Sign up failed");
-    return data.user.id;
-  };
-
   const signOut = async () => {
     await supabase.auth.signOut();
     setMembership(null);
@@ -103,7 +95,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         membershipLoading,
         signIn,
-        signUp,
         signOut,
         refreshMembership,
       }}
