@@ -150,7 +150,7 @@ export default function ApprovalsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-extrabold">&#x2705; Approvals</h1>
-        {items.length > 1 && (
+        {items.length > 0 && (
           <Button
             size="sm"
             className="rounded-xl font-bold bg-emerald-500 hover:bg-emerald-600 text-white border-0 shadow-sm"
