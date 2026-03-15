@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2, CheckCheck } from "lucide-react";
 import { toast } from "sonner";
+import { MemberAvatar } from "@/components/member-avatar";
 
 type FilterType = "all" | "reading" | "redemption";
 
@@ -199,9 +200,11 @@ export default function ApprovalsPage() {
             >
               <CardContent className="py-4 px-4 space-y-3">
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl mt-0.5 shrink-0">
-                    {item.type === "reading" ? "\u{1F4D6}" : "\u{1F3AE}"}
-                  </span>
+                  <MemberAvatar
+                    avatar={item.kid?.avatar ?? null}
+                    displayName={item.kid?.display_name ?? ""}
+                    size="md"
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="font-bold">
                       {item.kid?.display_name}

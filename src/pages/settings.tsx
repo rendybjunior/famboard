@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { MemberAvatar } from "@/components/member-avatar";
 
 export default function SettingsPage() {
   const { membership } = useAuth();
@@ -169,6 +170,11 @@ export default function SettingsPage() {
               <div key={member.id}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
+                    <MemberAvatar
+                      avatar={member.avatar}
+                      displayName={member.display_name}
+                      size="sm"
+                    />
                     <span className="font-medium">{member.display_name}</span>
                     {isMe && (
                       <span className="text-xs text-muted-foreground">

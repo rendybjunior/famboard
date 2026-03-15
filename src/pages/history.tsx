@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { EntryStatusBadge } from "@/components/entry-status-badge";
 import { BookOpen, Monitor } from "lucide-react";
+import { MemberAvatar } from "@/components/member-avatar";
 import type { EntryStatus } from "@/types/database";
 
 type TypeFilter = "all" | "reading" | "redemption";
@@ -117,7 +118,13 @@ export default function HistoryPage() {
           {items.map((item) => (
             <Card key={`${item.type}-${item.id}`}>
               <CardContent className="py-3 px-4 flex items-center gap-3">
-                {item.type === "reading" ? (
+                {isParent && item.kid ? (
+                  <MemberAvatar
+                    avatar={item.kid.avatar ?? null}
+                    displayName={item.kid.display_name}
+                    size="sm"
+                  />
+                ) : item.type === "reading" ? (
                   <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
                 ) : (
                   <Monitor className="h-4 w-4 text-muted-foreground shrink-0" />

@@ -1,18 +1,30 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/auth-context";
 import { useKidBalance } from "@/hooks/use-balances";
+import { useUpdateAvatar } from "@/hooks/use-family";
 import { useReadingEntries } from "@/hooks/use-reading-entries";
 import { useRedemptions } from "@/hooks/use-redemptions";
 import { useCancelReading } from "@/hooks/use-reading-entries";
 import { useCancelRedemption } from "@/hooks/use-redemptions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { EntryStatusBadge } from "@/components/entry-status-badge";
+import { MemberAvatar } from "@/components/member-avatar";
+import { AvatarPicker } from "@/components/avatar-picker";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 
 export default function KidDashboard() {
-  const { membership } = useAuth();
+  const { membership, refreshMembership } = useAuth();
+  const [avatarOpen, setAvatarOpen] = useState(false);
+  const updateAvatar = useUpdateAvatar();
   const { data: balance } = useKidBalance(membership?.id);
   const { data: readings } = useReadingEntries({
     familyId: membership?.family_id ?? "",
@@ -55,11 +67,46 @@ export default function KidDashboard() {
 
   const balanceValue = balance?.balance ?? 0;
 
+  const handleAvatarChange = async (emoji: string) => {
+    try {
+      await updateAvatar.mutateAsync(emoji);
+      await refreshMembership();
+      setAvatarOpen(false);
+      toast.success("Avatar updated!");
+    } catch {
+      toast.error("Failed to update avatar.");
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-extrabold">
-        Hi, {membership?.display_name}! <span className="inline-block animate-bounce">&#x1F44B;</span>
-      </h1>
+      <div className="flex items-center gap-3">
+        <button onClick={() => setAvatarOpen(true)} className="hover:scale-110 transition-transform">
+          <MemberAvatar
+            avatar={membership?.avatar ?? null}
+            displayName={membership?.display_name ?? ""}
+            size="lg"
+          />
+        </button>
+        <div>
+          <h1 className="text-2xl font-extrabold">
+            Hi, {membership?.display_name}! <span className="inline-block animate-bounce">&#x1F44B;</span>
+          </h1>
+          <p className="text-xs text-muted-foreground">Tap avatar to change</p>
+        </div>
+      </div>
+
+      <Dialog open={avatarOpen} onOpenChange={setAvatarOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Choose Your Avatar</DialogTitle>
+          </DialogHeader>
+          <AvatarPicker
+            value={membership?.avatar ?? null}
+            onChange={handleAvatarChange}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Balance Card */}
       <Card className="border-0 bg-gradient-to-br from-purple-500 via-pink-500 to-amber-400 text-white shadow-lg">

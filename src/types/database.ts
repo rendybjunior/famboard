@@ -13,6 +13,7 @@ export interface FamilyMember {
   family_id: string;
   user_id: string;
   display_name: string;
+  avatar: string | null;
   role: UserRole;
   redemption_rate: number;
   created_at: string;
@@ -49,6 +50,7 @@ export interface KidBalance {
   kid_id: string;
   family_id: string;
   display_name: string;
+  avatar: string | null;
   redemption_rate: number;
   total_reading_minutes: number;
   earned_screen_minutes: number;

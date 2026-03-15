@@ -171,6 +171,22 @@ export function useAddParent() {
   });
 }
 
+export function useUpdateAvatar() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (newAvatar: string) => {
+      const { error } = await supabase.rpc("update_my_avatar", {
+        new_avatar: newAvatar,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["family-members"] });
+      qc.invalidateQueries({ queryKey: ["kid-balances"] });
+    },
+  });
+}
+
 export function useRemoveMember() {
   const qc = useQueryClient();
   return useMutation({

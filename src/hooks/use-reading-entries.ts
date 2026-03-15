@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 import type { ReadingEntry, EntryStatus } from "@/types/database";
 
 interface ReadingEntryWithKid extends ReadingEntry {
-  kid: { display_name: string } | null;
+  kid: { display_name: string; avatar: string | null } | null;
 }
 
 interface Filters {
@@ -19,7 +19,7 @@ export function useReadingEntries(filters: Filters) {
     queryFn: async () => {
       let query = supabase
         .from("reading_entries")
-        .select("*, kid:family_members!kid_id(display_name)")
+        .select("*, kid:family_members!kid_id(display_name, avatar)")
         .eq("family_id", filters.familyId)
         .order("created_at", { ascending: false });
 

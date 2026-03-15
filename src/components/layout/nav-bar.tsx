@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth-context";
 import { usePendingCount } from "@/hooks/use-family";
+import { MemberAvatar } from "@/components/member-avatar";
 
 function NavItem({
   to,
@@ -70,7 +71,11 @@ export function NavBar() {
           onClick={handleSignOut}
           className="flex flex-col items-center gap-0.5 px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-all"
         >
-          <span className="text-xl">&#x1F44B;</span>
+          <MemberAvatar
+            avatar={membership?.avatar ?? null}
+            displayName={membership?.display_name ?? ""}
+            size="sm"
+          />
           Logout
         </button>
       </div>
