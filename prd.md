@@ -124,9 +124,24 @@ Parents want to encourage reading habits while managing screen time. Currently, 
 
 ### 6. Family Settings (Parent only)
 - **Family Name** — editable.
-- **Members** — list with role badges, ability to remove members.
+- **Members** — list with role badges, avatars, and ability to remove members.
 - **Add Kid / Add Parent** — parent creates accounts for kids and co-parents (email + password + display name).
 - **Redemption Rate** — adjust reading-to-screen-time ratio **per kid**.
+- **Push Notifications** — toggle to enable/disable push notifications (shown if browser supports it). Displays status: enabled, disabled, or blocked by browser.
+
+### 7. Analytics / Stats
+- **Route:** `/analytics`
+- **Period toggle:** Week / Month views.
+- **Summary stat cards:** Total reading minutes, current streak (days), average minutes per day, active days.
+- **Bar charts:** Daily/weekly breakdown of reading vs screen time usage with color-coded bars (purple for reading, pink for screen time).
+- **Per-kid breakdown (parent view):** Each kid's avatar, name, total reading, average per day, streak, active days, screen time used. Progress bar relative to top reader.
+
+### 8. Log Reading (Timer Mode)
+- **Toggle** between Manual entry and Timer mode.
+- **Timer features:** Start / Pause / Resume / Done controls with MM:SS display. Visual indicators: green pulse when running, amber dot when paused.
+- **Auto-stop** at MAX_READING_MINUTES (180 minutes).
+- **Persistent timer state** in localStorage — survives page navigation and browser refresh.
+- **Discard option** to clear timer without logging.
 
 ---
 
@@ -155,10 +170,11 @@ family_members 1--* redemptions (as reviewer)
 | Table | Purpose |
 |---|---|
 | `families` | Family group (name) |
-| `family_members` | Links auth.users to a family with role + per-kid redemption_rate |
+| `family_members` | Links auth.users to a family with role, per-kid redemption_rate, and emoji avatar |
 | `reading_entries` | Reading time submissions (minutes, book, status, review) |
 | `redemptions` | Screen time redemption requests (minutes, status, review) |
 | `kid_balances` (view) | Computed balance per kid: `earned - used` |
+| `push_subscriptions` | Stores Web Push VAPID subscriptions per user |
 
 ### Row-Level Security
 
@@ -178,7 +194,8 @@ All tables have RLS enabled. Key rules:
 | **Performance** | Pages load in < 2 seconds on 4G. |
 | **Accessibility** | WCAG 2.1 AA compliance (contrast, tap targets >= 44px). |
 | **Data Privacy** | Kids' data handled with extra care. Minimal PII stored. No analytics tracking on kid accounts. |
-| **Offline** | Phase 1: show "you're offline" banner. Phase 2: cached balance + queued submissions. |
+| **Offline** | Offline banner + React Query cache persisted to localStorage (7-day TTL). |
+| **PWA** | Installable as standalone app via service worker. Auto-updates hourly. |
 
 ---
 
@@ -192,7 +209,8 @@ All tables have RLS enabled. Key rules:
 | **Auth** | Supabase Auth (email/password + Google OAuth) |
 | **Database** | Supabase (PostgreSQL) + `@supabase/supabase-js` client |
 | **Hosting** | Vercel (pairs well with Supabase, simple deploy from Git) |
-| **Notifications** | In-app badge count (MVP) / Web Push API (Phase 2) |
+| **Notifications** | Web Push API (VAPID) + in-app badge count |
+| **PWA** | vite-plugin-pwa (Workbox, injectManifest strategy) |
 
 ---
 
@@ -215,14 +233,19 @@ All tables have RLS enabled. Key rules:
 - [x] Pending approvals badge on parent nav bar
 - [x] Basic history view with filters
 - [x] Family settings (members, rates, add/remove members)
+- [x] PWA support (installable standalone app, service worker with precaching, auto-update)
+- [x] Push notifications (VAPID Web Push, subscription management in settings)
+- [x] Timer mode for reading (start/pause/resume/done with localStorage persistence)
+- [x] Edit pending entries (kids can edit minutes, book title, notes on pending reading/redemption entries)
+- [x] Analytics page (week/month views, summary stats, bar charts, per-kid breakdown for parents)
+- [x] Avatar / emoji picker (50 emoji options, selectable per member, shown on dashboards and settings)
+- [x] Offline query cache (React Query persisted to localStorage with 7-day TTL)
 
 ### Not yet implemented
-- Push notifications (using in-app badge only).
-- Offline support / PWA (showing offline banner only).
 - Multiple activity types beyond reading.
 - Gamification (streaks, badges, leaderboards).
-- Detailed analytics / charts.
-- Edit/correction of approved entries (parent can work around by rejecting and having kid resubmit).
+- Entry corrections by parents on already-approved entries (parent can work around by rejecting and having kid resubmit).
+- Offline write queue (submissions while offline).
 
 ---
 
@@ -230,13 +253,10 @@ All tables have RLS enabled. Key rules:
 
 | Feature | Description |
 |---|---|
-| **Push Notifications** | Real-time alerts for pending approvals. |
 | **Entry Corrections** | Parents can adjust approved entry minutes after the fact. |
 | **Gamification** | Streaks, badges, achievements for consistent reading. |
 | **Multiple Activities** | Chores, homework, exercise — all redeemable. |
-| **Analytics** | Weekly/monthly reading trends, charts for parents. |
-| **Timer Mode** | Built-in reading timer so kids don't have to estimate. |
-| **PWA / Offline** | Installable app with offline queuing. |
+| **Offline Write Queue** | Queue submissions while offline, sync when back online. |
 
 ---
 
@@ -251,4 +271,4 @@ All tables have RLS enabled. Key rules:
 
 ---
 
-*Document version: 3.0 — 2026-03-14*
+*Document version: 4.0 — 2026-03-15*
