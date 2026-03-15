@@ -3,23 +3,26 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/auth-context";
 import { useKidBalance } from "@/hooks/use-balances";
 import { useUpdateAvatar } from "@/hooks/use-family";
-import { useReadingEntries } from "@/hooks/use-reading-entries";
-import { useRedemptions } from "@/hooks/use-redemptions";
-import { useCancelReading } from "@/hooks/use-reading-entries";
-import { useCancelRedemption } from "@/hooks/use-redemptions";
+import { useReadingEntries, useCancelReading, useEditReading } from "@/hooks/use-reading-entries";
+import { useRedemptions, useCancelRedemption, useEditRedemption } from "@/hooks/use-redemptions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { MAX_READING_MINUTES, QUICK_SELECT_MINUTES } from "@/lib/constants";
 import { EntryStatusBadge } from "@/components/entry-status-badge";
 import { MemberAvatar } from "@/components/member-avatar";
 import { AvatarPicker } from "@/components/avatar-picker";
-import { X } from "lucide-react";
+import { X, Pencil, Timer } from "lucide-react";
 import { toast } from "sonner";
+import { hasActiveTimer } from "@/hooks/use-timer";
 
 export default function KidDashboard() {
   const { membership, refreshMembership } = useAuth();
@@ -38,6 +41,16 @@ export default function KidDashboard() {
   });
   const cancelReading = useCancelReading();
   const cancelRedemption = useCancelRedemption();
+  const editReading = useEditReading();
+  const editRedemption = useEditRedemption();
+
+  const [editDialog, setEditDialog] = useState<{
+    id: string;
+    type: "reading" | "redemption";
+    minutes: number;
+    book_title: string;
+    notes: string;
+  } | null>(null);
 
   const activity = [
     ...(readings ?? []).map((r) => ({ ...r, type: "reading" as const })),
@@ -62,6 +75,29 @@ export default function KidDashboard() {
       toast.success("Entry cancelled.");
     } catch {
       toast.error("Failed to cancel entry.");
+    }
+  };
+
+  const handleEdit = async () => {
+    if (!editDialog) return;
+    try {
+      if (editDialog.type === "reading") {
+        await editReading.mutateAsync({
+          entryId: editDialog.id,
+          minutes: editDialog.minutes,
+          book_title: editDialog.book_title,
+          notes: editDialog.notes,
+        });
+      } else {
+        await editRedemption.mutateAsync({
+          entryId: editDialog.id,
+          minutes: editDialog.minutes,
+        });
+      }
+      toast.success("Entry updated!");
+      setEditDialog(null);
+    } catch {
+      toast.error("Failed to update entry.");
     }
   };
 
@@ -92,7 +128,7 @@ export default function KidDashboard() {
           <h1 className="text-2xl font-extrabold">
             Hi, {membership?.display_name}! <span className="inline-block animate-bounce">&#x1F44B;</span>
           </h1>
-          <p className="text-xs text-muted-foreground">Tap avatar to change</p>
+          {!membership?.avatar && <p className="text-xs text-muted-foreground">Tap avatar to change</p>}
         </div>
       </div>
 
@@ -125,6 +161,20 @@ export default function KidDashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Active Timer Banner */}
+      {hasActiveTimer() && (
+        <Link to="/log-reading" className="block">
+          <div className="bg-gradient-to-r from-purple-600 to-violet-600 text-white shadow-md rounded-xl py-3 px-4 flex items-center gap-3 hover:shadow-lg transition-shadow">
+            <span className="relative flex h-3 w-3 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-400" />
+            </span>
+            <Timer className="h-5 w-5 shrink-0" />
+            <span className="font-bold text-sm">Reading timer is running — tap to continue</span>
+          </div>
+        </Link>
+      )}
 
       {/* Action Buttons */}
       <div className="grid grid-cols-2 gap-3">
@@ -199,13 +249,30 @@ export default function KidDashboard() {
                   </div>
                   <EntryStatusBadge status={item.status} />
                   {item.status === "pending" && (
-                    <button
-                      onClick={() => handleCancel(item.id, item.type)}
-                      className="p-1 text-muted-foreground hover:text-destructive"
-                      title="Cancel"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
+                    <>
+                      <button
+                        onClick={() =>
+                          setEditDialog({
+                            id: item.id,
+                            type: item.type,
+                            minutes: item.minutes,
+                            book_title: "book_title" in item ? (item.book_title ?? "") : "",
+                            notes: "notes" in item ? (item.notes ?? "") : "",
+                          })
+                        }
+                        className="p-1 text-muted-foreground hover:text-purple-600"
+                        title="Edit"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleCancel(item.id, item.type)}
+                        className="p-1 text-muted-foreground hover:text-destructive"
+                        title="Cancel"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </>
                   )}
                 </CardContent>
               </Card>
@@ -213,6 +280,105 @@ export default function KidDashboard() {
           </div>
         )}
       </div>
+
+      {/* Edit pending entry */}
+      <Dialog
+        open={!!editDialog}
+        onOpenChange={(open: boolean) => !open && setEditDialog(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Edit {editDialog?.type === "reading" ? "Reading" : "Screen Time"} Entry
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Minutes</Label>
+              {editDialog?.type === "reading" && (
+                <div className="flex gap-2 mb-2">
+                  {QUICK_SELECT_MINUTES.map((m) => (
+                    <Button
+                      key={m}
+                      type="button"
+                      size="sm"
+                      className={`rounded-full px-3 border-0 shadow-sm ${
+                        editDialog.minutes === m
+                          ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                          : "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                      }`}
+                      onClick={() =>
+                        setEditDialog({ ...editDialog, minutes: m })
+                      }
+                    >
+                      {m}
+                    </Button>
+                  ))}
+                </div>
+              )}
+              <Input
+                type="number"
+                min={1}
+                max={editDialog?.type === "reading" ? MAX_READING_MINUTES : undefined}
+                value={editDialog?.minutes ?? 0}
+                onChange={(e) =>
+                  editDialog &&
+                  setEditDialog({
+                    ...editDialog,
+                    minutes: Number(e.target.value),
+                  })
+                }
+              />
+            </div>
+            {editDialog?.type === "reading" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Book Title</Label>
+                  <Input
+                    value={editDialog.book_title}
+                    onChange={(e) =>
+                      setEditDialog({
+                        ...editDialog,
+                        book_title: e.target.value,
+                      })
+                    }
+                    placeholder="Optional"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Notes</Label>
+                  <Input
+                    value={editDialog.notes}
+                    onChange={(e) =>
+                      setEditDialog({
+                        ...editDialog,
+                        notes: e.target.value,
+                      })
+                    }
+                    placeholder="Optional"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              className="rounded-xl"
+              onClick={() => setEditDialog(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0"
+              onClick={handleEdit}
+              disabled={editReading.isPending || editRedemption.isPending || !editDialog?.minutes || editDialog.minutes < 1}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

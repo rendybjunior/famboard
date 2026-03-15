@@ -69,7 +69,7 @@ export default function ParentDashboard() {
           <h1 className="text-2xl font-extrabold">
             Hi, {membership?.display_name}! &#x1F44B;
           </h1>
-          <p className="text-xs text-muted-foreground">Tap avatar to change</p>
+          {!membership?.avatar && <p className="text-xs text-muted-foreground">Tap avatar to change</p>}
         </div>
       </div>
 

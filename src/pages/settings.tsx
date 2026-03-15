@@ -22,12 +22,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Trash2, UserPlus } from "lucide-react";
+import { Loader2, Trash2, UserPlus, Bell, BellOff } from "lucide-react";
 import { toast } from "sonner";
 import { MemberAvatar } from "@/components/member-avatar";
+import { usePushNotifications } from "@/hooks/use-push";
 
 export default function SettingsPage() {
-  const { membership } = useAuth();
+  const { membership, session } = useAuth();
+  const push = usePushNotifications(session?.user.id);
   const familyId = membership?.family_id ?? "";
   const { data: family } = useFamily(familyId);
   const { data: members } = useFamilyMembers(familyId);
@@ -143,6 +145,54 @@ export default function SettingsPage() {
           </form>
         </CardContent>
       </Card>
+
+      {/* Push Notifications */}
+      {push.supported && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Notifications</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {push.isSubscribed ? (
+                  <Bell className="h-4 w-4 text-purple-500" />
+                ) : (
+                  <BellOff className="h-4 w-4 text-muted-foreground" />
+                )}
+                <span className="text-sm">
+                  {push.isSubscribed
+                    ? "Push notifications enabled"
+                    : push.permission === "denied"
+                      ? "Notifications blocked by browser"
+                      : "Get notified of new submissions"}
+                </span>
+              </div>
+              <Button
+                size="sm"
+                variant={push.isSubscribed ? "outline" : "default"}
+                disabled={push.loading || push.permission === "denied"}
+                onClick={async () => {
+                  if (push.isSubscribed) {
+                    await push.unsubscribe();
+                    toast.success("Notifications disabled.");
+                  } else {
+                    await push.subscribe();
+                    if (Notification.permission === "granted") {
+                      toast.success("Notifications enabled!");
+                    } else if (Notification.permission === "denied") {
+                      toast.error("Notifications blocked. Check browser settings.");
+                    }
+                  }
+                }}
+              >
+                {push.loading && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+                {push.isSubscribed ? "Disable" : "Enable"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Members */}
       <Card>

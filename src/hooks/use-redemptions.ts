@@ -113,6 +113,30 @@ export function useReviewRedemption() {
   });
 }
 
+export function useEditRedemption() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      entryId,
+      minutes,
+    }: {
+      entryId: string;
+      minutes: number;
+    }) => {
+      const { error } = await supabase
+        .from("redemptions")
+        .update({ minutes })
+        .eq("id", entryId)
+        .eq("status", "pending");
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["redemptions"] });
+      qc.invalidateQueries({ queryKey: ["pending-redemption"] });
+    },
+  });
+}
+
 export function useCancelRedemption() {
   const qc = useQueryClient();
   return useMutation({

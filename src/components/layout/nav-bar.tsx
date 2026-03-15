@@ -64,6 +64,7 @@ export function NavBar() {
           />
         )}
         <NavItem to="/history" emoji="&#x1F4CB;" label="History" />
+        <NavItem to="/analytics" emoji="&#x1F4CA;" label="Stats" />
         {isParent && (
           <NavItem to="/settings" emoji="&#x2699;&#xFE0F;" label="Settings" />
         )}

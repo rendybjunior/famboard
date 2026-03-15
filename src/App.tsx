@@ -1,9 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { AuthProvider } from "@/contexts/auth-context";
 import { ProtectedRoute } from "@/components/protected-route";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Toaster } from "@/components/ui/sonner";
+import { useRegisterSW } from "virtual:pwa-register/react";
 
 import LoginPage from "@/pages/login";
 import DashboardPage from "@/pages/dashboard/index";
@@ -12,18 +15,47 @@ import HistoryPage from "@/pages/history";
 import LogReadingPage from "@/pages/log-reading";
 import RedeemScreenTimePage from "@/pages/redeem-screen-time";
 import SettingsPage from "@/pages/settings";
+import AnalyticsPage from "@/pages/analytics";
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { staleTime: 30_000, retry: 1 },
+    queries: {
+      staleTime: 30_000,
+      retry: 1,
+      gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days — keep cache for offline
+    },
+    mutations: {
+      networkMode: "online",
+    },
   },
 });
 
+const persister = createSyncStoragePersister({
+  storage: window.localStorage,
+  key: "famboard-query-cache",
+});
+
+function SWRegistration() {
+  useRegisterSW({
+    onRegisteredSW(_url, registration) {
+      // Check for updates every hour
+      if (registration) {
+        setInterval(() => registration.update(), 60 * 60 * 1000);
+      }
+    },
+  });
+  return null;
+}
+
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 * 7 }}
+    >
       <BrowserRouter>
         <AuthProvider>
+          <SWRegistration />
           <Routes>
             {/* Public */}
             <Route path="/login" element={<LoginPage />} />
@@ -39,6 +71,7 @@ export default function App() {
                   element={<RedeemScreenTimePage />}
                 />
                 <Route path="/approvals" element={<ApprovalsPage />} />
+                <Route path="/analytics" element={<AnalyticsPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>
             </Route>
@@ -48,6 +81,6 @@ export default function App() {
           <Toaster />
         </AuthProvider>
       </BrowserRouter>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }

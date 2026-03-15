@@ -99,6 +99,37 @@ export function useReviewReading() {
   });
 }
 
+export function useEditReading() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      entryId,
+      minutes,
+      book_title,
+      notes,
+    }: {
+      entryId: string;
+      minutes: number;
+      book_title?: string;
+      notes?: string;
+    }) => {
+      const { error } = await supabase
+        .from("reading_entries")
+        .update({
+          minutes,
+          book_title: book_title || null,
+          notes: notes || null,
+        })
+        .eq("id", entryId)
+        .eq("status", "pending");
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["reading-entries"] });
+    },
+  });
+}
+
 export function useCancelReading() {
   const qc = useQueryClient();
   return useMutation({
