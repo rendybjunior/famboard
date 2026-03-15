@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { trackEvent } from "@/lib/gtag";
 import type { Redemption, EntryStatus } from "@/types/database";
 
 interface RedemptionWithKid extends Redemption {
@@ -65,8 +66,10 @@ export function useSubmitRedemption() {
         minutes: entry.minutes,
       });
       if (error) throw error;
+      return entry;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      trackEvent("redemption_submitted", { minutes: variables.minutes });
       qc.invalidateQueries({ queryKey: ["redemptions"] });
       qc.invalidateQueries({ queryKey: ["pending-redemption"] });
       qc.invalidateQueries({ queryKey: ["pending-count"] });
@@ -104,7 +107,8 @@ export function useReviewRedemption() {
         throw new Error("This entry was already reviewed.");
       }
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      trackEvent("redemption_reviewed", { action: variables.status });
       qc.invalidateQueries({ queryKey: ["redemptions"] });
       qc.invalidateQueries({ queryKey: ["pending-redemption"] });
       qc.invalidateQueries({ queryKey: ["pending-count"] });
@@ -130,7 +134,8 @@ export function useEditRedemption() {
         .eq("status", "pending");
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      trackEvent("redemption_edited", { minutes: variables.minutes });
       qc.invalidateQueries({ queryKey: ["redemptions"] });
       qc.invalidateQueries({ queryKey: ["pending-redemption"] });
     },
@@ -149,6 +154,7 @@ export function useCancelRedemption() {
       if (error) throw error;
     },
     onSuccess: () => {
+      trackEvent("redemption_cancelled");
       qc.invalidateQueries({ queryKey: ["redemptions"] });
       qc.invalidateQueries({ queryKey: ["pending-redemption"] });
       qc.invalidateQueries({ queryKey: ["pending-count"] });

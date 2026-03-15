@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase";
+import { trackEvent } from "@/lib/gtag";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,6 +60,7 @@ export default function LoginPage() {
   const needsFamily = !!session && !membership;
 
   const handleGoogleSignIn = async () => {
+    trackEvent("login", { method: "google" });
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -81,6 +83,7 @@ export default function LoginPage() {
       });
       if (rpcErr) throw rpcErr;
 
+      trackEvent("family_created", { method: "google" });
       await refreshMembership(session!.user.id);
       navigate("/dashboard");
     } catch (err: unknown) {
@@ -102,6 +105,7 @@ export default function LoginPage() {
     try {
       if (mode === "signin") {
         await signIn(email, password);
+        trackEvent("login", { method: "email" });
         navigate("/dashboard");
       } else {
         // Sign up with temp client to avoid session race conditions
@@ -125,6 +129,8 @@ export default function LoginPage() {
         if (rpcErr) throw rpcErr;
 
         await signIn(email, password);
+        trackEvent("sign_up", { method: "email" });
+        trackEvent("family_created", { method: "email" });
         await refreshMembership(data.user.id);
         navigate("/dashboard");
       }

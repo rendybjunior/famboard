@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { trackEvent } from "@/lib/gtag";
 import type { ReadingEntry, EntryStatus } from "@/types/database";
 
 interface ReadingEntryWithKid extends ReadingEntry {
@@ -53,8 +54,10 @@ export function useSubmitReading() {
         notes: entry.notes || null,
       });
       if (error) throw error;
+      return entry;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      trackEvent("reading_submitted", { minutes: variables.minutes });
       qc.invalidateQueries({ queryKey: ["reading-entries"] });
       qc.invalidateQueries({ queryKey: ["pending-count"] });
     },
@@ -91,7 +94,8 @@ export function useReviewReading() {
         throw new Error("This entry was already reviewed.");
       }
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      trackEvent("reading_reviewed", { action: variables.status });
       qc.invalidateQueries({ queryKey: ["reading-entries"] });
       qc.invalidateQueries({ queryKey: ["pending-count"] });
       qc.invalidateQueries({ queryKey: ["kid-balances"] });
@@ -124,7 +128,8 @@ export function useEditReading() {
         .eq("status", "pending");
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      trackEvent("reading_edited", { minutes: variables.minutes });
       qc.invalidateQueries({ queryKey: ["reading-entries"] });
     },
   });
@@ -142,6 +147,7 @@ export function useCancelReading() {
       if (error) throw error;
     },
     onSuccess: () => {
+      trackEvent("reading_cancelled");
       qc.invalidateQueries({ queryKey: ["reading-entries"] });
       qc.invalidateQueries({ queryKey: ["pending-count"] });
     },

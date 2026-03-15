@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { trackEvent } from "@/lib/gtag";
 import type { Family, FamilyMember } from "@/types/database";
 
 export function useFamily(familyId: string | undefined) {
@@ -68,7 +69,10 @@ export function useUpdateFamily() {
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["family"] }),
+    onSuccess: () => {
+      trackEvent("family_name_updated");
+      qc.invalidateQueries({ queryKey: ["family"] });
+    },
   });
 }
 
@@ -88,7 +92,8 @@ export function useUpdateRedemptionRate() {
         .eq("id", memberId);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      trackEvent("redemption_rate_updated", { rate: variables.rate });
       qc.invalidateQueries({ queryKey: ["family-members"] });
       qc.invalidateQueries({ queryKey: ["kid-balances"] });
     },
@@ -128,6 +133,7 @@ export function useAddKid() {
       if (rpcErr) throw rpcErr;
     },
     onSuccess: () => {
+      trackEvent("kid_added");
       qc.invalidateQueries({ queryKey: ["family-members"] });
       qc.invalidateQueries({ queryKey: ["kid-balances"] });
     },
@@ -166,6 +172,7 @@ export function useAddParent() {
       if (rpcErr) throw rpcErr;
     },
     onSuccess: () => {
+      trackEvent("parent_added");
       qc.invalidateQueries({ queryKey: ["family-members"] });
     },
   });
